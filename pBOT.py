@@ -15,7 +15,7 @@ offset = int(0)  # Количество записей для смещения �
 def get_data():  # Функция парсинга данных со стены сообщества
     global domain
     global offset
-    token = 'botConfig.vk_token'  # Токен для обращения к VK API
+    token = botConfig.vk_token  # Токен для обращения к VK API
     version = 5.103  # Версия VK API
     response = requests.get('https://api.vk.com/method/wall.get',  # Запрос данных при помощи метода wall.get
                             params={                               # и запись в перменную
