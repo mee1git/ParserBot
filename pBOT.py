@@ -71,54 +71,6 @@ class VkParser:  # Создаём класс VkParser
 bot = telebot.TeleBot(botConfig.tg_token)  # Создаём экземпляр бота
 parser = VkParser()  # Создаём экзампляр парсера
 
-d = int(0)  # Индекс списка с доменами
-domains = ['styd.pozor', 'stlbn', 'karkb', '4ch', 'reddit']  # Список доменов
-domain = domains[d]  # Переменная для хранения домена, который используется
-offset = int(0)  # Количество записей для смещения по стене
-
-
-def get_data():  # Функция парсинга данных со стены сообщества
-    global domain
-    global offset
-    token = botConfig.vk_token  # Токен для обращения к VK API
-    version = 5.103  # Версия VK API
-    response = requests.get('https://api.vk.com/method/wall.get',  # Запрос данных при помощи метода wall.get
-                            params={                               # и запись в перменную
-                                'access_token': token,             # Передаем в запрос токен,
-                                'v': version,                      # версию,
-                                'domain': domain,                  # домен,
-                                'count': 5,                        # нужное количество постов и
-                                'offset': offset                   # смещение
-                            }
-                            )
-    data = response.json()['response']['items']  # Записываем ответ в перменную data в json формате, при этом
-    return data                                  # выбирая только записи со стены, и возвращаем data
-
-
-def get_meme_text():  # Функция для получения текста с записей
-    meme_text = ['', '', '', '', '']  # Создаём список из 5 элементов
-    for i in range(5):  # Заполняем список в цикле
-        if (get_data()[i]['text']) != '':  # Если в записи есть текст,
-            meme_text[i] += str(get_data()[i]['text'])  # записываем его в список
-        else:  # Если же нет,
-            meme_text[i] += '...'  # записывем многоточие
-    return meme_text  # Возвращаем список с текстами
-
-
-def get_meme_pic():  # Функция для получения картинок с записей
-    meme_pic = ['', '', '', '', '']  # Создаём список из 5 элементов
-    for i in range(5):  # Заполняем список в цикле
-        if get_data()[i]['attachments'][0]['type']:  # Если в записи есть картинки,
-            len_attachments = len(get_data()[i]['attachments'])   # проверяем их количестов и
-            for z in range(len_attachments):  # в цикле,
-                try:  # пытаемся записать их в отдельный элемент списка
-                    meme_pic[i] += str(get_data()[i]['attachments'][z]['photo']['sizes'][-1]['url'] + '\n    \n')
-                except KeyError:  # Если происходит ошибка значит, в записи находилось видео
-                    meme_pic[i] += "It's a video, sorry"  # Оповещаем об этом пользователя
-            else:  # Если кратинок нет,
-                meme_pic[i] += '...'  # записываем многоточие
-    return meme_pic  # Возвращаем список с картинками
-
 
 def markup_set():  # Функция для создания клавиатуры
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)  # Объявляем экземпляр клавиатуры
