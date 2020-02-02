@@ -32,18 +32,21 @@ class VkParser:  # Создаём класс VkParser
         return meme_text  # Возвращаем список с текстами
 
     def get_meme_pic(self):  # Функция для получения картинок с записей
-        meme_pic = ['', '', '', '', '']  # Создаём список из 5 элементов
+        meme_pic = [[], [], [], [], []]  # Создаём список из 5 списков
         for i in range(5):  # Заполняем список в цикле
-            if self.get_data()[i]['attachments'][0]['type']:  # Если в записи есть картинки,
-                len_attachments = len(self.get_data()[i]['attachments'])  # проверяем их количестов и
-                for z in range(len_attachments):  # в цикле,
-                    try:  # пытаемся записать их в отдельный элемент списка
-                        meme_pic[i] += str(self.get_data()[i]['attachments'][z]['photo']['sizes'][-1]['url'] + '\n  \n')
-                    except KeyError:  # Если происходит ошибка значит, в записи находилось видео
-                        meme_pic[i] += "It's a video, sorry"  # Оповещаем об этом пользователя
+            try:  # Проверка наличя дополнений к посту
+                if self.get_data()[i]['attachments'][0]['type']:  # Если в записи есть картинки,
+                    len_attachments = len(self.get_data()[i]['attachments'])  # проверяем их количестов и
+                    for z in range(len_attachments):  # в цикле,
+                        try:  # пытаемся записать их ссылки в отдельный элемент списка
+                            meme_pic[i].append(str(self.get_data()[i]['attachments'][z]['photo']['sizes'][-1]['url']))
+                        except KeyError:  # Если происходит ошибка значит, в записи находилось видео
+                            meme_pic[i] = "..."  # Записываем строку ... вместо списка
                 else:  # Если кратинок нет,
-                    meme_pic[i] += '...'  # записываем многоточие
-        return meme_pic  # Возвращаем список с картинками
+                    meme_pic[i] = '...'  # записываем строку ... вместо списка
+            except KeyError:  # Если происходит ошибка, значит дополнений не было
+                meme_pic[i] = '...'  # записываем строку ... вместо списка
+        return meme_pic  # Возвращаем список с ссылками на картинки
 
     def change_domain(self, index):  # Функция изменения домена
         self.__d = index  # Меняем индекс списка доменов
@@ -70,54 +73,6 @@ class VkParser:  # Создаём класс VkParser
 
 bot = telebot.TeleBot(botConfig.tg_token)  # Создаём экземпляр бота
 parser = VkParser()  # Создаём экзампляр парсера
-
-d = int(0)  # Индекс списка с доменами
-domains = ['styd.pozor', 'stlbn', 'karkb', '4ch', 'reddit']  # Список доменов
-domain = domains[d]  # Переменная для хранения домена, который используется
-offset = int(0)  # Количество записей для смещения по стене
-
-
-def get_data():  # Функция парсинга данных со стены сообщества
-    global domain
-    global offset
-    token = botConfig.vk_token  # Токен для обращения к VK API
-    version = 5.103  # Версия VK API
-    response = requests.get('https://api.vk.com/method/wall.get',  # Запрос данных при помощи метода wall.get
-                            params={                               # и запись в перменную
-                                'access_token': token,             # Передаем в запрос токен,
-                                'v': version,                      # версию,
-                                'domain': domain,                  # домен,
-                                'count': 5,                        # нужное количество постов и
-                                'offset': offset                   # смещение
-                            }
-                            )
-    data = response.json()['response']['items']  # Записываем ответ в перменную data в json формате, при этом
-    return data                                  # выбирая только записи со стены, и возвращаем data
-
-
-def get_meme_text():  # Функция для получения текста с записей
-    meme_text = ['', '', '', '', '']  # Создаём список из 5 элементов
-    for i in range(5):  # Заполняем список в цикле
-        if (get_data()[i]['text']) != '':  # Если в записи есть текст,
-            meme_text[i] += str(get_data()[i]['text'])  # записываем его в список
-        else:  # Если же нет,
-            meme_text[i] += '...'  # записывем многоточие
-    return meme_text  # Возвращаем список с текстами
-
-
-def get_meme_pic():  # Функция для получения картинок с записей
-    meme_pic = ['', '', '', '', '']  # Создаём список из 5 элементов
-    for i in range(5):  # Заполняем список в цикле
-        if get_data()[i]['attachments'][0]['type']:  # Если в записи есть картинки,
-            len_attachments = len(get_data()[i]['attachments'])   # проверяем их количестов и
-            for z in range(len_attachments):  # в цикле,
-                try:  # пытаемся записать их в отдельный элемент списка
-                    meme_pic[i] += str(get_data()[i]['attachments'][z]['photo']['sizes'][-1]['url'] + '\n    \n')
-                except KeyError:  # Если происходит ошибка значит, в записи находилось видео
-                    meme_pic[i] += "It's a video, sorry"  # Оповещаем об этом пользователя
-            else:  # Если кратинок нет,
-                meme_pic[i] += '...'  # записываем многоточие
-    return meme_pic  # Возвращаем список с картинками
 
 
 def markup_set():  # Функция для создания клавиатуры
@@ -180,9 +135,23 @@ def send_key(message):
     if message.text == "get memes":  # Обрабатываем команду "get memes"
         bot.send_message(message.chat.id, "Подожди немного, выполняется запрос...")  # Оповещаем о загрузке
         mem_t = parser.get_meme_text()  # Получаем тексты записей
-        mem_p = parser.get_meme_pic()  # Получаем кратинки записей
+        mem_p = parser.get_meme_pic()  # Получаем ссылки кратинок с записей
+        z = 0
         for i in range(5):  # В цикле отправляем записи
-            bot.send_message(message.chat.id, str(parser.get_domain_name())+"\n"+str(mem_t[i])+"\n"+str(mem_p[i]))
+            bot.send_message(message.chat.id, str(parser.get_domain_name())+"\n"+str(mem_t[i]))  # Отправляем текст
+            if mem_p[i] != '...':  # Если есть картинки
+                if len(mem_p[i]) != 1:  # и их несколько, отправляем предупреждение
+                    bot.send_message(message.chat.id, 'Функция отправки нескольких фото в разработке, извините')
+                else:  # Если же картинка одна
+                    p = requests.get(mem_p[i][z])  # Скачиваем картинку по ссылке
+                    out = open("img.jpg", "wb")  # } Записываем её в файл
+                    out.write(p.content)         # }
+                    p.close()    # } Закрываем файлы
+                    out.close()  # }
+                    out = open("img.jpg", "rb")  # Открываем картинку в режиме чтения
+                    bot.send_photo(message.chat.id, photo=out)  # Отправляем картинку
+                    out.close()  # Закрываем картинку
+
         # Отправляем сообщение с inline клавиатурой
         bot.send_message(message.chat.id, 'Как быстро кончается 5 мемов...', reply_markup=in_markup)
     elif message.text == "back":  # Обрабатываем команду "back"
@@ -199,9 +168,21 @@ def callback_inline(call):  # Функция обработки
         bot.send_message(call.message.chat.id, "Подожди немного, выполняется запрос...")  # Оповещяем о загрузке
         mem_t = parser.get_meme_text()  # Получаем тексты записей
         mem_p = parser.get_meme_pic()  # Получаем картинки записей
+        z = 0
         for i in range(5):  # В цикле отправляем записи
-            bot.send_message(call.message.chat.id, str(parser.get_domain_name()) + "\n"
-                             + str(mem_t[i]) + "\n" + str(mem_p[i]))
+            bot.send_message(call.message.chat.id, str(parser.get_domain_name()) + "\n" + str(mem_t[i]))
+            if mem_p[i] != '...':
+                if len(mem_p[i]) != 1:
+                    bot.send_message(call.message.chat.id, 'Функция отправки нескольких фото в разработке, извините')
+                else:
+                    p = requests.get(mem_p[i][z])
+                    out = open("img.jpg", "wb")
+                    out.write(p.content)
+                    p.close()
+                    out.close()
+                    out = open("img.jpg", "rb")
+                    bot.send_photo(call.message.chat.id, photo=out)
+                    out.close()
         # Отправляем сообщение с inline клавиатурой
         bot.send_message(call.message.chat.id, 'Как быстро кончается 5 мемов...', reply_markup=in_markup)
 
