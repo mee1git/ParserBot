@@ -3,6 +3,7 @@ import requests  # Импортируем библиотеку для запро
 import botConfig  # Импортируем config бота, куда записаны токены
 
 from telebot import types  # Импортируем модуль для работы с кастомными клавиатурами
+from telebot.types import InputMediaPhoto, InputMediaVideo
 
 
 class VkParser:  # Создаём класс VkParser
@@ -136,12 +137,23 @@ def send_key(message):
         bot.send_message(message.chat.id, "Подожди немного, выполняется запрос...")  # Оповещаем о загрузке
         mem_t = parser.get_meme_text()  # Получаем тексты записей
         mem_p = parser.get_meme_pic()  # Получаем ссылки кратинок с записей
-        z = 0
         for i in range(5):  # В цикле отправляем записи
+            z = 0
             bot.send_message(message.chat.id, str(parser.get_domain_name())+"\n"+str(mem_t[i]))  # Отправляем текст
             if mem_p[i] != '...':  # Если есть картинки
-                if len(mem_p[i]) != 1:  # и их несколько, отправляем предупреждение
-                    bot.send_message(message.chat.id, 'Функция отправки нескольких фото в разработке, извините')
+                if len(mem_p[i]) != 1:
+                    pic_group = []
+                    for z in range(len(mem_p[i])):
+                        m = requests.get(mem_p[i][z])
+                        out = open("img" + str(z) + ".jpg", "wb")
+                        out.write(m.content)
+                        m.close()
+                        out.close()
+                        pic_group.append(open("img" + str(z) + ".jpg", "rb"))
+                    bot.send_media_group(message.chat.id,
+                                         [InputMediaPhoto(pic_group[z]) for z in range(len(mem_p[i]))])
+                    for z in range(len(mem_p[i])):
+                        pic_group[z].close()
                 else:  # Если же картинка одна
                     p = requests.get(mem_p[i][z])  # Скачиваем картинку по ссылке
                     out = open("img.jpg", "wb")  # } Записываем её в файл
@@ -168,12 +180,23 @@ def callback_inline(call):  # Функция обработки
         bot.send_message(call.message.chat.id, "Подожди немного, выполняется запрос...")  # Оповещяем о загрузке
         mem_t = parser.get_meme_text()  # Получаем тексты записей
         mem_p = parser.get_meme_pic()  # Получаем картинки записей
-        z = 0
         for i in range(5):  # В цикле отправляем записи
+            z = 0
             bot.send_message(call.message.chat.id, str(parser.get_domain_name()) + "\n" + str(mem_t[i]))
             if mem_p[i] != '...':
                 if len(mem_p[i]) != 1:
-                    bot.send_message(call.message.chat.id, 'Функция отправки нескольких фото в разработке, извините')
+                    pic_group = []
+                    for z in range(len(mem_p[i])):
+                        m = requests.get(mem_p[i][z])
+                        out = open("img" + str(z) + ".jpg", "wb")
+                        out.write(m.content)
+                        m.close()
+                        out.close()
+                        pic_group.append(open("img" + str(z) + ".jpg", "rb"))
+                    bot.send_media_group(call.message.chat.id,
+                                         [InputMediaPhoto(pic_group[z]) for z in range(len(mem_p[i]))])
+                    for z in range(len(mem_p[i])):
+                        pic_group[z].close()
                 else:
                     p = requests.get(mem_p[i][z])
                     out = open("img.jpg", "wb")
