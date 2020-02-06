@@ -1,6 +1,7 @@
 import telebot  # Импортируем библиотеку для работы с Telegram API
 import requests  # Импортируем библиотеку для запросов к VK API
 import botConfig  # Импортируем config бота, куда записаны токены
+import os
 
 from telebot import types  # Импортируем модуль для работы с кастомными клавиатурами
 from telebot.types import InputMediaPhoto  # Импортируем модуль для работы метода SendMediaGroup
@@ -155,6 +156,7 @@ def send_key(message):
                                          [InputMediaPhoto(pic_group[z]) for z in range(len(mem_p[i]))])
                     for z in range(len(mem_p[i])):  # В цикле
                         pic_group[z].close()  # Закрыаем файлы
+                        os.remove("img" + str(z) + ".jpg")
                 else:  # Если же картинка одна
                     p = requests.get(mem_p[i][z])  # Скачиваем картинку по ссылке
                     out = open("img.jpg", "wb")  # } Записываем её в файл
@@ -164,6 +166,7 @@ def send_key(message):
                     out = open("img.jpg", "rb")  # Открываем картинку в режиме чтения
                     bot.send_photo(message.chat.id, photo=out)  # Отправляем картинку
                     out.close()  # Закрываем картинку
+                    os.remove("img.jpg")
             else:  # Если это видео
                 bot.send_message(message.chat.id, str(mem_p[i]))  # Оповещаем пользователя
 
